@@ -6,7 +6,7 @@ import { LoginPage } from './components/LoginPage';
 import { Sidebar } from './components/Sidebar';
 import { HomePage } from './pages/HomePage';
 import { ArchivePage } from './pages/ArchivePage';
-import { UserManagementPage } from './pages/UserManagementPage';
+import  UserManagementPage  from './pages/UserManagementPage';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { CreateProjectPage } from './pages/CreateProjectPage';
 import { Page } from './types';
@@ -62,7 +62,7 @@ function PrivateAppShell() {
   const openFrom =
     (from: ListPage) =>
     (projectId: string) => {
-      setReturnPage(from);
+      setReturnPage(from);  
       setSelectedProjectId(projectId);
       setCurrentPage('project-details');
     };
