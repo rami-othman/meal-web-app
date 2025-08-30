@@ -50,7 +50,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           client_id: 'MEALTeam_App',
           username: formData.username,
           password: formData.password,
-          scope: 'openid profile email roles phone address offline_access',
+          scope: 'MEALTeam openid profile email roles phone address offline_access',
         }),
       });
 
