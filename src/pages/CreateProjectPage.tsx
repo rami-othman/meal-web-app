@@ -604,14 +604,6 @@ export function CreateProjectPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Project Code</label>
-          <input
-            name="projectCode"
-            value={formData.projectCode}
-            onChange={handleInput}
-            placeholder="e.g., WFP-2024-001"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
         </div>
 
         <div>
@@ -1257,11 +1249,7 @@ export function CreateProjectPage() {
                 <ArrowRight size={16} />
               </button>
             ) : (
-              <button
-                onClick={handleCreate}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Finish
+              <button>
               </button>
             )}
           </div>

@@ -419,40 +419,12 @@ export default function UserManagementPage() {
                 minLength={6}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
-              <button
-                type="button"
-                onClick={() => setShowPwd2((s) => !س)}
-                className="absolute right-2 top-[30px] p-1 text-gray-500 hover:text-gray-700"
-                aria-label="Toggle confirm password visibility"
-              >
-                {showPwd2 ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-2">
-              <input
-                id="isActive"
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={onChange}
-                className="h-4 w-4"
-              />
-              <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                id="lockoutEnabled"
-                type="checkbox"
-                name="lockoutEnabled"
-                checked={formData.lockoutEnabled}
-                onChange={onChange}
-                className="h-4 w-4"
-              />
-              <label htmlFor="lockoutEnabled" className="text-sm text-gray-700">Lockout Enabled</label>
-            </div>
+
           </div>
 
           <button

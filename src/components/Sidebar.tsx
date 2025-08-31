@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+// src/components/Sidebar.tsx
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Home,
   Plus,
@@ -12,12 +13,15 @@ import {
   Info,
   CheckCircle,
   AlertCircle,
+  RotateCw,
 } from 'lucide-react';
 import { Page } from '../types';
+import { API_BASE, apiFetch } from '../lib/api';
 
 interface NotificationItem {
   id: string;
   title: string;
+  body?: string;
   time?: string;
   type?: 'info' | 'success' | 'warning' | 'error';
   read?: boolean;
@@ -29,6 +33,7 @@ interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
 
+  /** اختياري: إشعارات مبدئية من المكوّن الأب */
   notifications?: NotificationItem[];
   onLogout?: () => void;
 }
@@ -46,16 +51,59 @@ export function Sidebar({
   onPageChange,
   isOpen,
   onToggle,
-  notifications = [],
+  notifications: initialNotifications = [],
   onLogout,
 }: SidebarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [askLogout, setAskLogout] = useState(false);
 
+  // ===== Notifications (fetch from API) =====
+  const [notifications, setNotifications] = useState<NotificationItem[]>(
+    initialNotifications
+  );
+  const [loadingNotif, setLoadingNotif] = useState(false);
+  const [notifErr, setNotifErr] = useState<string | null>(null);
+  const loadedOnce = useRef(false);
+
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
     [notifications]
   );
+
+  async function loadNotifications() {
+    setLoadingNotif(true);
+    setNotifErr(null);
+    try {
+      const res = await apiFetch(`${API_BASE}/api/app/notification`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const json = await res.json();
+      const items = Array.isArray(json?.items) ? json.items : [];
+      const mapped: NotificationItem[] = items.map(
+        (it: any, idx: number): NotificationItem => ({
+          id: `api-${idx}-${it?.title ?? ''}-${it?.body ?? ''}`,
+          title: it?.title ?? 'إشعار',
+          body: it?.body ?? '',
+          type: 'info',
+          read: false,
+        })
+      );
+      setNotifications(mapped);
+      loadedOnce.current = true;
+    } catch (e: any) {
+      setNotifErr(e?.message || 'Failed to load notifications');
+    } finally {
+      setLoadingNotif(false);
+    }
+  }
+
+  // افتح القائمة لأول مرة ⇒ اجلب الإشعارات
+  useEffect(() => {
+    if (notifOpen && !loadedOnce.current) {
+      loadNotifications();
+    }
+  }, [notifOpen]);
 
   const notifIcon = (type?: NotificationItem['type']) => {
     switch (type) {
@@ -77,7 +125,6 @@ export function Sidebar({
       sessionStorage.removeItem(k);
     });
     onLogout?.();
-    // لو بدك ترجع للّوجن بدل الرئيسية غير السطر التالي إلى '/login'
     window.location.replace('/');
   };
 
@@ -108,7 +155,9 @@ export function Sidebar({
         <div className="px-5 py-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
             <div className="text-xl font-bold leading-tight">
-              Project<br/>Dashboard
+              Project
+              <br />
+              Dashboard
             </div>
 
             <div className="flex items-center gap-2">
@@ -122,40 +171,60 @@ export function Sidebar({
                 >
                   <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-[10px] leading-4 px-1.5 rounded-full">
+                    <span className="absolute -top-1 -left-1 bg-purple-500 text-white text-[10px] leading-4 px-1.5 rounded-full">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </button>
 
+                {/* Notifications dropdown (RTL) */}
                 {notifOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-[22rem] max-w-[90vw] bg-white text-gray-900 rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+                    dir="rtl"
+                    className="absolute left-0 mt-2 w-[24rem] max-w-[92vw] bg-white text-gray-900 rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 text-right"
                     onMouseLeave={() => setNotifOpen(false)}
                   >
                     <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b">
-                      <div className="font-medium">Notifications</div>
-                      <button
-                        type="button"
-                        onClick={() => setNotifOpen(false)}
-                        className="text-sm text-purple-600 hover:text-purple-700"
-                      >
-                        Close
-                      </button>
+                      <div className="font-medium">الإشعارات</div>
+                      <div className="flex items-center gap-2 flex-row-reverse">
+                        <button
+                          type="button"
+                          onClick={loadNotifications}
+                          disabled={loadingNotif}
+                          className="inline-flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                          title="تحديث"
+                        >
+                          {loadingNotif ? 'جاري التحديث…' : 'تحديث'}
+                          <RotateCw size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNotifOpen(false)}
+                          className="text-sm text-purple-600 hover:text-purple-700"
+                          title="إغلاق"
+                        >
+                          إغلاق
+                        </button>
+                      </div>
                     </div>
 
-                    {notifications.length === 0 ? (
+                    {notifErr && (
+                      <div className="px-4 py-3 text-sm text-red-600">
+                        {notifErr}
+                      </div>
+                    )}
+
+                    {notifications.length === 0 && !loadingNotif ? (
                       <div className="px-4 py-6 text-sm text-gray-500">
-                        No notifications
+                        لا يوجد إشعارات
                       </div>
                     ) : (
-                      <ul className="max-h-80 overflow-auto divide-y">
+                      <ul className="max-h-96 overflow-auto divide-y">
                         {notifications.map((n) => (
-                          <li
-                            key={n.id}
-                            className={`px-4 py-3 ${!n.read ? 'bg-purple-50/40' : ''}`}
-                          >
-                            <div className="flex items-start gap-3">
+                          <li key={n.id} className="px-4 py-3 relative">
+                            {/* شريط تمييز على اليمين */}
+                            <span className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-indigo-500" />
+                            <div className="flex items-start gap-3 flex-row-reverse">
                               <span
                                 className={`mt-0.5 ${
                                   n.type === 'success'
@@ -167,10 +236,20 @@ export function Sidebar({
                               >
                                 {notifIcon(n.type)}
                               </span>
+
                               <div className="min-w-0">
-                                <div className="text-sm font-medium truncate">{n.title}</div>
+                                <div className="text-sm font-semibold leading-5 break-words">
+                                  {n.title}
+                                </div>
+                                {n.body && (
+                                  <p className="mt-1 text-[13px] leading-6 text-gray-700 break-words">
+                                    {n.body}
+                                  </p>
+                                )}
                                 {n.time && (
-                                  <div className="text-xs text-gray-500 mt-0.5">{n.time}</div>
+                                  <div className="mt-1 text-xs text-gray-500">
+                                    {n.time}
+                                  </div>
                                 )}
                               </div>
                             </div>
